@@ -1,5 +1,5 @@
-typedef uint_8 MAC;
-typedef uint_8 IP;
+typedef uint8_t MAC;
+typedef uint8_t IP;
 
 typedef struct Station {
     MAC adrMAC;
@@ -20,13 +20,17 @@ typedef struct Trame {
 
 typedef struct Commutation {
     MAC adrMAC;
-    uint_32 port;
+    uint32_t port;
 } Commutation;
     
-typedef struct wafenSSwitch {
+typedef struct Switch {
     char nom[32];
     MAC adrMAC;
     size_t nb_ports;
-    uint_16 priorite;
-    Commutation tabCommutation[nb_ports];
-} wafenSSwitch;
+    uint16_t priorite;
+    Commutation *tabCommutation;
+} Switch;
+
+typedef struct Sommet {
+    
+} Sommet;
