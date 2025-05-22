@@ -1,3 +1,7 @@
+#pragma once
+
+#include <stdlib.h>
+
 typedef uint8_t MAC;
 typedef uint8_t IP;
 
