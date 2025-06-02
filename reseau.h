@@ -51,16 +51,29 @@ typedef enum TypeSommet {
 } TypeSommet;
 
 typedef struct Lien {
-    Sommet s1;
-    Sommet s2;
+    Sommet *s1;
+    Sommet *s2;
 } Lien;
 
-//void afficher_Switch(Switch const sw);
+typedef struct Reseau {
+  size_t nb_sommets;
+  size_t nb_liens;
+  Sommet *sommets;
+  Lien *liens;
+} Reseau;
 
-void creer_reseau(char* nomFichier);
+void init_reseau(Reseau *r);
+void deinit_reseau(Reseau *r);
+int allouer_reseau(Reseau *r, size_t nb_sommets, size_t nb_liens);
+void creer_reseau(char* nomFichier, Reseau *reseau);
 void init_sommet(Sommet *s);
 void deinit_sommet(Sommet *s);
-void print_mac(MAC mac[6]);
-void print_ip(IP ip[4]);
+void print_mac(const MAC mac[6]);
+void print_ip(const IP ip[4]);
+void afficher_station(const Station *st);
+void afficher_switch(const Switch *sw);
+void afficher_sommet(const Sommet *s);
+void afficher_lien(const Lien *l);
+void afficher_reseau(const Reseau *r);
 
 #endif
