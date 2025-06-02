@@ -15,7 +15,7 @@ int main() {
 
     // Initialiser les sommets
     reseau.sommets[0].type = TYPE_STATION;
-    init_sommet(&reseau.sommets[0]);
+    init_sommet(&reseau.sommets[0]);  
 
     reseau.sommets[1].type = TYPE_SWITCH;
     init_sommet(&reseau.sommets[1]);
