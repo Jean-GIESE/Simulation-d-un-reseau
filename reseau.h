@@ -1,4 +1,6 @@
 #pragma once
+#ifndef RESEAU_H
+#define RESEAU_H
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -11,11 +13,6 @@ typedef struct Station {
     IP adrIP[4];
     char nom[32];
 } Station;
-
-typedef struct Hub {
-    char nom[32];
-    size_t nb_ports;
-} Hub;
 
 typedef struct Trame {
     MAC destination[6];
@@ -36,7 +33,6 @@ typedef struct Switch {
 } Switch;
 
 typedef enum {
-    TYPE_HUB,
     TYPE_SWITCH,
     TYPE_STATION
 } TypeObjet;
@@ -46,9 +42,17 @@ typedef struct Sommet {
     union {
         Station station;
         Switch sw;
-        Hub hub;
     } objet;
 } Sommet;
 
+typedef struct Lien {
+    Sommet s1;
+    Sommet s2;
+} Lien;
+
 void init_sommet(Sommet *s);
 void deinit_sommet(Sommet *s);
+void print_mac(MAC mac[6]);
+void print_ip(IP ip[4]);
+
+#endif
