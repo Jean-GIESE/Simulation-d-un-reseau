@@ -20,7 +20,6 @@ typedef struct Hub {
 typedef struct Trame {
     MAC destination[6];
     MAC source[6];
-    char data[1500];
 } Trame;
 
 typedef struct Commutation {
@@ -50,3 +49,6 @@ typedef struct Sommet {
         Hub hub;
     } objet;
 } Sommet;
+
+void init_sommet(Sommet *s);
+void deinit_sommet(Sommet *s);
