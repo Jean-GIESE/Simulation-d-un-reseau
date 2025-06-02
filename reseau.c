@@ -4,10 +4,6 @@
 #include "reseau.h"
 #include <string.h>
 
-// void afficher_Switch(Switch sw)
-// {
-//     
-// }
 void init_reseau(Reseau *r) {
     if (!r) return;
     memset(r, 0, sizeof(Reseau));
@@ -113,17 +109,93 @@ void deinit_sommet(Sommet *s) {
     }
 }
 
-void print_mac(MAC mac[6]) {
+void print_mac(const MAC mac[6]) {
     for (int i = 0; i < 6; i++) {
         printf("%02X", mac[i]);
         if (i < 5) printf(":");
     }
 }
 
-void print_ip(IP ip[4]) {
+void print_ip(const IP ip[4]) {
     for (int i = 0; i < 4; i++) {
         printf("%d", ip[i]);
         if (i < 3) printf(".");
     }
 }
 
+void afficher_station(const Station *st) {
+    if (!st) return;
+    printf("Station \"%s\"\n", st->nom);
+    printf("  MAC : "); print_mac(st->adrMAC); printf("\n");
+    printf("  IP  : "); print_ip(st->adrIP); printf("\n");
+}
+
+void afficher_switch(const Switch *sw) {
+    if (!sw) return;
+    printf("Switch \"%s\"\n", sw->nom);
+    printf("  MAC      : "); print_mac(sw->adrMAC); printf("\n");
+    printf("  Nb ports : %zu\n", sw->nb_ports);
+    printf("  Priorite : %d\n", sw->priorite);
+
+    if (sw->tabCommutation) {
+        printf("  Table de commutation :\n");
+        for (size_t i = 0; i < sw->nb_ports; i++) {
+            printf("   Port %zu : MAC = ", i);
+            print_mac(sw->tabCommutation[i].adrMAC);
+            printf(", port associé = %d\n", sw->tabCommutation[i].port);
+        }
+    } else {
+        printf("  Table de commutation : NULL\n");
+    }
+}
+
+void afficher_sommet(const Sommet *s) {
+    if (!s) return;
+
+    switch (s->type) {
+        case TYPE_STATION:
+            afficher_station(&s->objet.station);
+            break;
+        case TYPE_SWITCH:
+            afficher_switch(&s->objet.sw);
+            break;
+        default:
+            printf("Sommet de type inconnu\n");
+    }
+}
+
+void afficher_lien(const Lien *l) {
+    if (!l) return;
+    printf("Lien entre :\n");
+    if (l->s1) {
+        printf("  - ");
+        afficher_sommet(l->s1);
+    } else {
+        printf("  - sommet 1 NULL\n");
+    }
+    if (l->s2) {
+        printf("  - ");
+        afficher_sommet(l->s2);
+    } else {
+        printf("  - sommet 2 NULL\n");
+    }
+}
+
+void afficher_reseau(const Reseau *r) {
+    if (!r) return;
+
+    printf("Réseau : %zu sommets, %zu liens\n", r->nb_sommets, r->nb_liens);
+    printf("Sommets :\n");
+    for (size_t i = 0; i < r->nb_sommets; i++) {
+        printf("Sommet %zu :\n", i);
+        afficher_sommet(&r->sommets[i]);
+        printf("\n");
+    }
+
+    printf("Liens :\n");
+    for (size_t i = 0; i < r->nb_liens; i++) {
+        printf("Lien %zu :\n", i);
+        afficher_lien(&r->liens[i]);
+        printf("\n");
+    }
+}
