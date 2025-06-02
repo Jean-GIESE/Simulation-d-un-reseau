@@ -47,16 +47,45 @@ int allouer_reseau(Reseau *r, size_t nb_sommets, size_t nb_liens) {
 }
 
 
-void creer_Reseaux(char* nomFichier)
+void creer_reseau(char* nomFichier, Reseau *reseau)
 {
     FILE * fichier = fopen(nomFichier,"r");
     
     char ligne[32];
     
     if (fichier != NULL) {
+        int nbEquipements, nbLiens;
+        if (fscanf(fichier, "%d %d", &nbEquipements, &nbLiens) != 2) {
+            fprintf(stderr, "Erreur de lecture des deux entiers\n");
+            fclose(fichier);
+            return;
+        }
+        
+        init_reseau(reseau);
+        if (allouer_reseau(reseau, nbEquipements, nbLiens) != 0)
+        {
+            fprintf(stderr, "Erreur allocation reseau!\n");
+            fclose(fichier);
+            return;
+        }
+        
+        for (int i=0; i<nbEquipements; i++)
+        {
+            fgets(ligne, sizeof(ligne), fichier);
+            if (ligne[0] == '2') {
+                reseau->sommets[i].type = TYPE_SWITCH;
+            }
+            else {
+                reseau->sommets[i].type = TYPE_STATION;
+            }
+            init_sommet(&reseau->sommets[i]);
+        }
+        
         while (fgets(ligne, sizeof(ligne), fichier)) {
             printf("%s", ligne);
         }
+        
+        deinit_reseau(reseau);
         fclose(fichier);
     }
     else {
