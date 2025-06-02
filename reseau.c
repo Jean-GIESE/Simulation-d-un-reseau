@@ -71,14 +71,43 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
         
         for (int i=0; i<nbEquipements; i++)
         {
-            fgets(ligne, sizeof(ligne), fichier);
-            if (ligne[0] == '2') {
+            if (fgets(ligne, sizeof(ligne), fichier) == NULL) {
+                fprintf(stderr, "Erreur de lecture de la deuxième ligne\n");
+                fclose(fichier);
+                return 1;
+            }
+
+            int type, nbPorts, priorite;
+            char adrMAC[32];
+
+            // Découper la ligne avec strtok
+            char *token = strtok(ligne, ";");
+            if (token) type = atoi(token);
+            
+            token = strtok(NULL, ";");
+            if (token) strncpy(adrMAC, token, sizeof(adrMAC));
+            
+            if (type == 2) {
                 reseau->sommets[i].type = TYPE_SWITCH;
+                init_sommet(&reseau->sommets[i]);
+                
+                token = strtok(NULL, ";");
+                if (token) nbPorts = atoi(token);
+
+                token = strtok(NULL, ";");
+                if (token) priorite = atoi(token);
+                
+                char *nomSW = "sw ";
+                nomSW[3] = i;
+                
+                reseau->sommets->objet.sw.nb_ports = nbPorts;
+                reseau->sommets->objet.sw.priorite = priorite;
+                strcpy(reseau->sommets->objet.sw.nom, nomSW);
             }
             else {
                 reseau->sommets[i].type = TYPE_STATION;
+                init_sommet(&reseau->sommets[i]);
             }
-            init_sommet(&reseau->sommets[i]);
         }
         
         while (fgets(ligne, sizeof(ligne), fichier)) {
