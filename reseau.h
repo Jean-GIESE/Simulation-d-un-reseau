@@ -55,8 +55,17 @@ typedef struct Lien {
     Sommet s2;
 } Lien;
 
-//void afficher_Switch(Switch const sw);
+typedef struct Reseau {
+  size_t nb_sommets;
+  size_t nb_liens;
+  Sommet *sommets;
+  Lien *liens;
+} Reseau;
 
+//void afficher_Switch(Switch const sw);
+void init_reseau(Reseau *r);
+void deinit_reseau(Reseau *r);
+int allouer_reseau(Reseau *r, size_t nb_sommets, size_t nb_liens);
 void creer_Reseaux(char* nomFichier);
 void init_sommet(Sommet *s);
 void deinit_sommet(Sommet *s);
