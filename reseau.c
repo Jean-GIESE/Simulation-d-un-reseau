@@ -8,10 +8,52 @@
 // {
 //     
 // }
+void init_reseau(Reseau *r) {
+    if (!r) return;
+    memset(r, 0, sizeof(Reseau));
+}
+
+void deinit_reseau(Reseau *r) {
+    if (!r) return;
+
+    for (size_t i = 0; i < r->nb_sommets; i++) {
+        deinit_sommet(&r->sommets[i]);  // libère les ressources dynamiques internes
+    }
+
+    free(r->sommets);
+    free(r->liens);
+    
+    r->sommets = NULL;
+    r->liens = NULL;
+    r->nb_sommets = 0;
+    r->nb_liens = 0;
+}
+
+int allouer_reseau(Reseau *r, size_t nb_sommets, size_t nb_liens) {
+    if (!r) return -1;
+
+    r->sommets = malloc(nb_sommets * sizeof(Sommet));
+    if (!r->sommets) return -1;
+    memset(r->sommets, 0, nb_sommets * sizeof(Sommet));
+
+    r->liens = malloc(nb_liens * sizeof(Lien));
+    if (!r->liens) {
+        free(r->sommets);
+        r->sommets = NULL;
+        return -1;
+    }
+    memset(r->liens, 0, nb_liens * sizeof(Lien));
+
+    r->nb_sommets = nb_sommets;
+    r->nb_liens = nb_liens;
+
+    return 0;
+}
+
 
 void creer_Reseaux(char* nomFichier)
 {
-    FICHIER * fichier = fopen(nomFichier,"r");
+    FILE * fichier = fopen(nomFichier,"r");
     
     char ligne[32];
     
