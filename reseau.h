@@ -53,6 +53,7 @@ typedef enum TypeSommet {
 typedef struct Lien {
     Sommet *s1;
     Sommet *s2;
+    uint16_t poids;
 } Lien;
 
 typedef struct Reseau {
