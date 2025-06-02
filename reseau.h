@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include <stdint.h>
 
 typedef uint8_t MAC;
 typedef uint8_t IP;
@@ -12,7 +13,7 @@ typedef struct Station {
 } Station;
 
 typedef struct Hub {
-    char nom[32]
+    char nom[32];
     size_t nb_ports;
 } Hub;
 
@@ -36,5 +37,23 @@ typedef struct Switch {
 } Switch;
 
 typedef struct Sommet {
-    
+    MAC adrMAC;
+    void* type;
 } Sommet;
+
+typedef enum TypeSommet {
+    SWITCH,
+    HUB,
+    STATION
+} TypeSommet;
+
+void afficher_Switch(Switch const sw);
+
+
+
+
+
+
+
+
+

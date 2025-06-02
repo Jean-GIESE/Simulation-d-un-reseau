@@ -1,1 +1,2 @@
-build/./reseau.c.o: reseau.c
+build/reseau.c.o: reseau.c reseau.h
+reseau.h:
