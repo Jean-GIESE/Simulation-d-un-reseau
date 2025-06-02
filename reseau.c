@@ -9,13 +9,25 @@
 //     
 // }
 
-void creer_Reseaux(char* nomFichier)
+void creer_reseau(char* nomFichier)
 {
-    FICHIER * fichier = fopen(nomFichier,"r");
+    FILE *fichier = fopen(nomFichier,"r");
     
     char ligne[32];
     
     if (fichier != NULL) {
+        int nbEquipements, nbLiens;
+        if (fscanf(fichier, "%d %d", &nbEquipements, &nbLiens) != 2) {
+            fprintf(stderr, "Erreur de lecture des deux entiers\n");
+            fclose(fichier);
+            return;
+        }
+        
+        for (int i=0; i<nbEquipements; i++)
+        {
+            
+        }
+        
         while (fgets(ligne, sizeof(ligne), fichier)) {
             printf("%s", ligne);
         }
