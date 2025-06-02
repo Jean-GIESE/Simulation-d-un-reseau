@@ -12,11 +12,6 @@ typedef struct Station {
     char nom[32];
 } Station;
 
-typedef struct Hub {
-    char nom[32];
-    size_t nb_ports;
-} Hub;
-
 typedef struct Trame {
     MAC destination[6];
     MAC source[6];
@@ -46,7 +41,6 @@ typedef struct Sommet {
     union {
         Station station;
         Switch sw;
-        Hub hub;
     } objet;
 } Sommet;
 
@@ -64,11 +58,5 @@ typedef struct Lien
 
 //void afficher_Switch(Switch const sw);
 
-
-
-
-
-
-
-
-
+// void init_sommet(Sommet *s);
+// void deinit_sommet(Sommet *s);
