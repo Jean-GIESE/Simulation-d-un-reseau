@@ -1,4 +1,6 @@
 #pragma once
+#ifndef RESEAU_H
+#define RESEAU_H
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -31,7 +33,6 @@ typedef struct Switch {
 } Switch;
 
 typedef enum {
-    TYPE_HUB,
     TYPE_SWITCH,
     TYPE_STATION
 } TypeObjet;
@@ -46,17 +47,20 @@ typedef struct Sommet {
 
 typedef enum TypeSommet {
     SWITCH,
-    HUB,
     STATION
 } TypeSommet;
 
-typedef struct Lien
-{
+typedef struct Lien {
     Sommet s1;
     Sommet s2;
 } Lien;
 
 //void afficher_Switch(Switch const sw);
 
-// void init_sommet(Sommet *s);
-// void deinit_sommet(Sommet *s);
+void creer_Reseaux(char* nomFichier);
+void init_sommet(Sommet *s);
+void deinit_sommet(Sommet *s);
+void print_mac(MAC mac[6]);
+void print_ip(IP ip[4]);
+
+#endif

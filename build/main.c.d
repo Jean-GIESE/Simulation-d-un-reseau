@@ -1,3 +1,2 @@
-build/main.c.o: main.c reseau.c reseau.h
-reseau.c:
+build/main.c.o: main.c reseau.h
 reseau.h:
