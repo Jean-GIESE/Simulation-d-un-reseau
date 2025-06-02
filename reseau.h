@@ -51,8 +51,8 @@ typedef enum TypeSommet {
 } TypeSommet;
 
 typedef struct Lien {
-    Sommet s1;
-    Sommet s2;
+    Sommet *s1;
+    Sommet *s2;
 } Lien;
 
 typedef struct Reseau {
