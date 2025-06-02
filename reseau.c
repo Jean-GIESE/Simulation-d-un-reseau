@@ -1,6 +1,30 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "reseau.h"
 #include <string.h>
-#include <stdio.h>
+
+// void afficher_Switch(Switch sw)
+// {
+//     
+// }
+
+void creer_Reseaux(char* nomFichier)
+{
+    FICHIER * fichier = fopen(nomFichier,"r");
+    
+    char ligne[32];
+    
+    if (fichier != NULL) {
+        while (fgets(ligne, sizeof(ligne), fichier)) {
+            printf("%s", ligne);
+        }
+        fclose(fichier);
+    }
+    else {
+        fprintf(stderr, "Impossible d'ouvrir le fichier!\n");
+    }
+}
 
 void init_sommet(Sommet *s) {
     if (!s) return;

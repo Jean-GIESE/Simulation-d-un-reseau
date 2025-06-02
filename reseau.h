@@ -45,11 +45,19 @@ typedef struct Sommet {
     } objet;
 } Sommet;
 
+typedef enum TypeSommet {
+    SWITCH,
+    STATION
+} TypeSommet;
+
 typedef struct Lien {
     Sommet s1;
     Sommet s2;
 } Lien;
 
+//void afficher_Switch(Switch const sw);
+
+void creer_Reseaux(char* nomFichier);
 void init_sommet(Sommet *s);
 void deinit_sommet(Sommet *s);
 void print_mac(MAC mac[6]);
