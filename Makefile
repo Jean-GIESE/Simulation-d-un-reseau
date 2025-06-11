@@ -1,4 +1,4 @@
-TARGET_EXEC ?= kk
+TARGET_EXEC ?= main
 
 SRC_DIR := .
 BUILD_DIR := build

@@ -13,7 +13,7 @@ void deinit_reseau(Reseau *r) {
     if (!r) return;
 
     for (size_t i = 0; i < r->nb_sommets; i++) {
-        deinit_sommet(&r->sommets[i]);  // libère les ressources dynamiques internes
+        deinit_sommet(&r->sommets[i]);
     }
 
     free(r->sommets);
@@ -167,6 +167,14 @@ void deinit_sommet(Sommet *s) {
     }
 }
 
+void init_trame(Trame *t) {
+    memset(t, 0, sizeof(Trame));
+}
+
+void deinit_trame(Trame *t) {
+    memset(t, 0, sizeof(Trame));
+}
+
 void print_mac(const MAC mac[6]) {
     for (int i = 0; i < 6; i++) {
         printf("%02X", mac[i]);
@@ -256,4 +264,44 @@ void afficher_reseau(const Reseau *r) {
         afficher_lien(&r->liens[i]);
         printf("\n");
     }
+}
+
+void afficher_trame_user(const Trame *t) {
+    printf("Préambule : ");
+    for (int i = 0; i < 7; i++) {
+        printf("%02X ", t->preambule[i]);
+    }
+    printf("\n");
+
+    printf("SFD        : %02X\n", t->sfd);
+
+    printf("MAC Dest.  : ");
+    print_mac(t->destination);
+    printf("\n");
+
+    printf("MAC Source : ");
+    print_mac(t->source);
+    printf("\n");
+
+    printf("Type       : 0x%04X\n", t->type);
+
+    printf("Données    : ");
+    for (int i = 0; i < 46; i++) {
+        printf("%02X ", t->donnees[i]);
+    }
+    printf("\n");
+
+    printf("FCS        : %08X\n", t->fcs);
+}
+
+
+void afficher_trame(const Trame *t) {
+    const uint8_t *octets = (const uint8_t *)t;
+    size_t taille = sizeof(Trame);
+
+    for (size_t i = 0; i < taille; i++) {
+        printf("%02X ", octets[i]);
+        if ((i + 1) % 16 == 0) printf("\n"); // affichage en lignes de 16 octets
+    }
+    printf("\n");
 }

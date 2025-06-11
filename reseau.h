@@ -15,8 +15,13 @@ typedef struct Station {
 } Station;
 
 typedef struct Trame {
+    uint8_t preambule[7];
+    uint8_t sfd;
     MAC destination[6];
     MAC source[6];
+    uint16_t type;
+    uint8_t donnees[46];
+    uint32_t fcs;
 } Trame;
 
 typedef struct Commutation {
@@ -53,6 +58,7 @@ typedef enum TypeSommet {
 typedef struct Lien {
     Sommet *s1;
     Sommet *s2;
+    uint16_t poids;
 } Lien;
 
 typedef struct Reseau {
@@ -68,6 +74,8 @@ int allouer_reseau(Reseau *r, size_t nb_sommets, size_t nb_liens);
 void creer_reseau(char* nomFichier, Reseau *reseau);
 void init_sommet(Sommet *s);
 void deinit_sommet(Sommet *s);
+void init_trame(Trame *t);
+void deinit_trame(Trame *t);
 void print_mac(const MAC mac[6]);
 void print_ip(const IP ip[4]);
 void afficher_station(const Station *st);
@@ -75,5 +83,7 @@ void afficher_switch(const Switch *sw);
 void afficher_sommet(const Sommet *s);
 void afficher_lien(const Lien *l);
 void afficher_reseau(const Reseau *r);
+void afficher_trame_user(const Trame *t);
+void afficher_trame(const Trame *t);
 
 #endif

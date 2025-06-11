@@ -34,39 +34,18 @@ int main()
 //   deinit_sommet(&sw);
     
     
+    Reseau reseau;
+    creer_reseau("/home/Base/kk/kk/mylan", &reseau);
+
+    Trame t;
     
-//     creer_reseau("/adhome/j/jg/jgiese/S21/SAE/kk/mylan", );
+    init_trame(&t); // Trame vide, propre, avec 0 partout
+
+    afficher_trame_user(&t); // Affiche des zéros partout
+    afficher_trame(&t);      // Affichage brut : que des 00
+
+    // Quand on a fini
+    deinit_trame(&t); // "Nettoyage" (remise à zéro, optionnel ici)
+
     return 0;
 }
-// int main() {
-//     Reseau reseau;
-// 
-//     Initialisation
-//     init_reseau(&reseau);
-// 
-//     Allouer 2 sommets et 1 lien
-//     if (allouer_reseau(&reseau, 2, 1) != 0) {
-//         fprintf(stderr, "Erreur allocation reseau\n");
-//         return 1;
-//     }
-// 
-//     Initialiser les sommets
-//     reseau.sommets[0].type = TYPE_STATION;
-//     init_sommet(&reseau.sommets[0]);
-// 
-//     reseau.sommets[1].type = TYPE_SWITCH;
-//     init_sommet(&reseau.sommets[1]);
-// 
-//     Initialiser un lien entre sommet 0 et 1 (pointeurs vers les sommets)
-//     reseau.liens[0].s1 = &reseau.sommets[0];
-//     reseau.liens[0].s2 = &reseau.sommets[1];
-// 
-//     Affichage complet
-//     printf("Reseau:\n");
-//     afficher_reseau(&reseau);
-// 
-//     Libération mémoire
-//     deinit_reseau(&reseau);
-// 
-//     return 0;
-// }
