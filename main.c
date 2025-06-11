@@ -36,5 +36,16 @@ int main()
     
     Reseau reseau;
     creer_reseau("/home/Base/kk/kk/mylan", &reseau);
+
+    Trame t;
+    
+    init_trame(&t); // Trame vide, propre, avec 0 partout
+
+    afficher_trame_user(&t); // Affiche des zéros partout
+    afficher_trame(&t);      // Affichage brut : que des 00
+
+    // Quand on a fini
+    deinit_trame(&t); // "Nettoyage" (remise à zéro, optionnel ici)
+
     return 0;
 }
