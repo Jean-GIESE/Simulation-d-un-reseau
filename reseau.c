@@ -74,39 +74,109 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
             if (fgets(ligne, sizeof(ligne), fichier) == NULL) {
                 fprintf(stderr, "Erreur de lecture de la deuxième ligne\n");
                 fclose(fichier);
-                return 1;
+                return;
             }
 
-            int type, nbPorts, priorite;
-            char adrMAC[32];
+            size_t type, nbPorts, priorite;
+            char adrMACChar[32];
 
             // Découper la ligne avec strtok
             char *token = strtok(ligne, ";");
             if (token) type = atoi(token);
+            else {
+                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fclose(fichier);
+                return;
+            }
             
             token = strtok(NULL, ";");
-            if (token) strncpy(adrMAC, token, sizeof(adrMAC));
+            if (token) strncpy(adrMACChar, token, sizeof(adrMACChar)-1);
+            else {
+                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fclose(fichier);
+                return;
+            }
             
+            MAC mac[6];
+            char *tokenMAC = strtok(adrMACChar, ":");
+            int j = 0;
+
+            while (tokenMAC != NULL && j < 6) {
+                mac[j] = (uint8_t)strtol(tokenMAC, NULL, 16);  // Conversion base 16
+                tokenMAC = strtok(NULL, ":");
+                j++;
+            }
+            
+            int numSwitch = 1;
             if (type == 2) {
                 reseau->sommets[i].type = TYPE_SWITCH;
                 init_sommet(&reseau->sommets[i]);
+      
+                for (int k=0; k<6; k++) { reseau->sommets->objet.sw.adrMAC[k] = mac[k]; }
                 
                 token = strtok(NULL, ";");
                 if (token) nbPorts = atoi(token);
+                else {
+                    fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                    fclose(fichier);
+                    return;
+                }
 
                 token = strtok(NULL, ";");
                 if (token) priorite = atoi(token);
+                else {
+                    fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                    fclose(fichier);
+                    return;
+                }
                 
                 char *nomSW = "sw ";
-                nomSW[3] = i;
+                nomSW[3] = numSwitch;
+                numSwitch++;
                 
                 reseau->sommets->objet.sw.nb_ports = nbPorts;
                 reseau->sommets->objet.sw.priorite = priorite;
                 strcpy(reseau->sommets->objet.sw.nom, nomSW);
+                
+                reseau->sommets->objet.sw.tabCommutation = realloc(reseau->sommets->objet.sw.tabCommutation, sizeof(Commutation) * reseau->sommets->objet.sw.nb_ports);
+                if (reseau->sommets->objet.sw.tabCommutation != NULL) {
+                    for (size_t i = 0; i < nbPorts; i++) {
+                        memset(reseau->sommets->objet.sw.tabCommutation[i].adrMAC, 0, 6);
+                        reseau->sommets->objet.sw.tabCommutation[i].port = 0;
+                    }
+                }
             }
-            else {
+            
+            int numSt = 1;
+            if (type == 1) {
                 reseau->sommets[i].type = TYPE_STATION;
                 init_sommet(&reseau->sommets[i]);
+                
+                for (int k=0; k<6; k++) { reseau->sommets->objet.station.adrMAC[k] = mac[k]; }
+                
+                char adrIPChar[32];
+                token = strtok(NULL, ";");
+                if (token) strncpy(adrIPChar, token, sizeof(adrIPChar)-1);
+                else {
+                    fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                    fclose(fichier);
+                    return;
+                }
+                
+                IP ip[4];
+                char *tokenIP = strtok(adrMACChar, ":");
+                j = 0;
+                while (tokenIP != NULL && j < 4) {
+                    ip[j] = (uint8_t)strtol(tokenIP, NULL, 16);  // Conversion base 16
+                    tokenIP = strtok(NULL, ":");
+                    j++;
+                }
+                for (int k=0; k<4; k++) { reseau->sommets->objet.station.adrIP[k] = ip[k]; }
+                
+                char *nomSt = "st ";
+                nomSt[3] = numSt;
+                strcpy(reseau->sommets->objet.station.nom, nomSt);
+                numSt++;
             }
         }
         
