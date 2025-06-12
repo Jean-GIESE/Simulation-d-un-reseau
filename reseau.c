@@ -112,7 +112,7 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 reseau->sommets[i].type = TYPE_SWITCH;
                 init_sommet(&reseau->sommets[i]);
       
-                for (int k=0; k<6; k++) { reseau->sommets->objet.sw.adrMAC[k] = mac[k]; }
+                for (int k=0; k<6; k++) { reseau->sommets[i].objet.sw.adrMAC[k] = mac[k]; }
                 
                 token = strtok(NULL, ";");
                 if (token) nbPorts = atoi(token);
@@ -134,15 +134,15 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 nomSW[3] = numSwitch;
                 numSwitch++;
                 
-                reseau->sommets->objet.sw.nb_ports = nbPorts;
-                reseau->sommets->objet.sw.priorite = priorite;
-                strcpy(reseau->sommets->objet.sw.nom, nomSW);
+                reseau->sommets[i].objet.sw.nb_ports = nbPorts;
+                reseau->sommets[i].objet.sw.priorite = priorite;
+                strcpy(reseau->sommets[i].objet.sw.nom, nomSW);
                 
-                reseau->sommets->objet.sw.tabCommutation = realloc(reseau->sommets->objet.sw.tabCommutation, sizeof(Commutation) * reseau->sommets->objet.sw.nb_ports);
-                if (reseau->sommets->objet.sw.tabCommutation != NULL) {
+                reseau->sommets[i].objet.sw.tabCommutation = realloc(reseau->sommets[i].objet.sw.tabCommutation, sizeof(Commutation) * reseau->sommets[i].objet.sw.nb_ports);
+                if (reseau->sommets[i].objet.sw.tabCommutation != NULL) {
                     for (size_t i = 0; i < nbPorts; i++) {
-                        memset(reseau->sommets->objet.sw.tabCommutation[i].adrMAC, 0, 6);
-                        reseau->sommets->objet.sw.tabCommutation[i].port = 0;
+                        memset(reseau->sommets[i].objet.sw.tabCommutation[i].adrMAC, 0, 6);
+                        reseau->sommets[i].objet.sw.tabCommutation[i].port = 0;
                     }
                 }
             }
@@ -152,7 +152,7 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 reseau->sommets[i].type = TYPE_STATION;
                 init_sommet(&reseau->sommets[i]);
                 
-                for (int k=0; k<6; k++) { reseau->sommets->objet.station.adrMAC[k] = mac[k]; }
+                for (int k=0; k<6; k++) { reseau->sommets[i].objet.station.adrMAC[k] = mac[k]; }
                 
                 char adrIPChar[32];
                 token = strtok(NULL, ";");
@@ -171,17 +171,48 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                     tokenIP = strtok(NULL, ":");
                     j++;
                 }
-                for (int k=0; k<4; k++) { reseau->sommets->objet.station.adrIP[k] = ip[k]; }
+                for (int k=0; k<4; k++) { reseau->sommets[i].objet.station.adrIP[k] = ip[k]; }
                 
                 char *nomSt = "st ";
                 nomSt[3] = numSt;
-                strcpy(reseau->sommets->objet.station.nom, nomSt);
+                strcpy(reseau->sommets[i].objet.station.nom, nomSt);
                 numSt++;
             }
         }
         
+        size_t i=0;
         while (fgets(ligne, sizeof(ligne), fichier)) {
-            printf("%s", ligne);
+            size_t numS1, numS2, poidsLien;
+            
+            char *token = strtok(ligne, ";");
+            if (token) numS1 = atoi(token);
+            else {
+                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fclose(fichier);
+                return;
+            }
+            
+            token = strtok(NULL, ";");
+            if (token) numS2 = atoi(token);
+            else {
+                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fclose(fichier);
+                return;
+            }
+            
+            token = strtok(NULL, ";");
+            if (token) poidsLien = atoi(token);
+            else {
+                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fclose(fichier);
+                return;
+            }
+            
+            reseau->liens[i].s1 = &reseau->sommets[numS1];
+            reseau->liens[i].s2 = &reseau->sommets[numS2];
+            reseau->liens[i].poids = poidsLien;
+            
+            i++;
         }
         
         deinit_reseau(reseau);
