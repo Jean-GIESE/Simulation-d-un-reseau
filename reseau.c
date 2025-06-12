@@ -254,6 +254,7 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
     else {
         fprintf(stderr, "Impossible d'ouvrir le fichier!\n");
     }
+
 }
 
 
@@ -374,17 +375,17 @@ void afficher_switch(const Switch *sw) {
     printf("Switch \"%s\"\n", sw->nom);
     printf("  MAC      : "); print_mac(sw->adrMAC); printf("\n");
     printf("  Nb ports : %zu\n", sw->nb_ports);
-    printf("  Priorite : %d\n", sw->priorite);
+    printf("  Priorite : %u\n", sw->priorite);
 
-    if (sw->tabCommutation) {
+    if (sw->tabCommutation && sw->nb_entrees > 0) {
         printf("  Table de commutation :\n");
         for (size_t i = 0; i < sw->nb_entrees; i++) {
-            printf("   Port %zu : MAC = ", i);
+            printf("   Entrée %zu : MAC = ", i);
             print_mac(sw->tabCommutation[i].adrMAC);
-            printf(", port associé = %d\n", sw->tabCommutation[i].port);
+            printf(", port associé = %u\n", sw->tabCommutation[i].port);
         }
     } else {
-        printf("  Table de commutation : NULL\n");
+        printf("  Table de commutation : vide\n");
     }
 }
 
@@ -418,12 +419,15 @@ void afficher_lien(const Lien *l) {
     } else {
         printf("  - sommet 2 NULL\n");
     }
+    printf("  Ports : %u <-> %u\n", l->port_s1, l->port_s2);
+    printf("  Poids : %u\n", l->poids);
 }
 
 void afficher_reseau(const Reseau *r) {
     if (!r) return;
 
     printf("Réseau : %zu sommets, %zu liens\n", r->nb_sommets, r->nb_liens);
+
     printf("Sommets :\n");
     for (size_t i = 0; i < r->nb_sommets; i++) {
         printf("Sommet %zu :\n", i);
@@ -440,6 +444,7 @@ void afficher_reseau(const Reseau *r) {
 }
 
 void afficher_trame_user(const Trame *t) {
+    if (!t) return;
     printf("Préambule : ");
     for (int i = 0; i < 7; i++) {
         printf("%02X ", t->preambule[i]);
@@ -469,12 +474,13 @@ void afficher_trame_user(const Trame *t) {
 
 
 void afficher_trame(const Trame *t) {
+    if (!t) return;
     const uint8_t *octets = (const uint8_t *)t;
     size_t taille = sizeof(Trame);
 
     for (size_t i = 0; i < taille; i++) {
         printf("%02X ", octets[i]);
-        if ((i + 1) % 16 == 0) printf("\n"); // affichage en lignes de 16 octets
+        if ((i + 1) % 16 == 0) printf("\n");
     }
     printf("\n");
 }
