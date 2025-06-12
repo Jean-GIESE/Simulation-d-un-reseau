@@ -3,8 +3,8 @@
 
 int main()
 {    
-  //Reseau reseau;
-  //creer_reseau("/home/Base/kk/kk/mylan", &reseau);
-
+  Reseau reseau;
+  creer_reseau("/home/legerh/Base/kk//mylan", &reseau);
+  afficher_reseau(&reseau);
   return 0;
 }
