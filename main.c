@@ -35,7 +35,7 @@ int main()
     
     
     Reseau reseau;
-    creer_reseau("/home/Base/kk/kk/mylan", &reseau);
+    creer_reseau("/adhome/j/jg/jgiese/S21/SAE/kk/mylan", &reseau);
 
     Trame t;
     

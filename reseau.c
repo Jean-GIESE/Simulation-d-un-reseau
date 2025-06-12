@@ -51,7 +51,7 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
 {
     FILE * fichier = fopen(nomFichier,"r");
     
-    char ligne[32];
+    char ligne[128];
     
     if (fichier != NULL) {
         int nbEquipements, nbLiens;
@@ -69,6 +69,9 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
             return;
         }
         
+        fgets(ligne, sizeof(ligne), fichier);
+        int numSwitch = 1;
+        int numSt = 1;
         for (int i=0; i<nbEquipements; i++)
         {
             if (fgets(ligne, sizeof(ligne), fichier) == NULL) {
@@ -76,6 +79,7 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 fclose(fichier);
                 return;
             }
+            //printf("Ligne brute (équipement %d): %s\n", i, ligne);
 
             size_t type, nbPorts, priorite;
             char adrMACChar[32];
@@ -84,15 +88,43 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
             char *token = strtok(ligne, ";");
             if (token) type = atoi(token);
             else {
-                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fprintf(stderr, "Erreur de lecture d'une ligne1\n");
                 fclose(fichier);
                 return;
             }
+            //printf("Champ type: %s\n", token);
             
+            MAC mac[6];
+            char *token_ctx = NULL; // contexte pour strtok_r
+
+            // Lire l'adresse MAC (token 2)
             token = strtok(NULL, ";");
+            if (token) {
+                strncpy(adrMACChar, token, sizeof(adrMACChar) - 1);
+                adrMACChar[sizeof(adrMACChar) - 1] = '\0';
+                
+                // Faire une copie pour découper sans casser strtok global
+                char adrMACCopy[32];
+                strncpy(adrMACCopy, adrMACChar, sizeof(adrMACCopy) - 1);
+                adrMACCopy[sizeof(adrMACCopy) - 1] = '\0';
+
+                char *tokenMAC = strtok_r(adrMACCopy, ":", &token_ctx);
+                int j = 0;
+                while (tokenMAC != NULL && j < 6) {
+                    mac[j++] = (uint8_t)strtol(tokenMAC, NULL, 16);
+                    tokenMAC = strtok_r(NULL, ":", &token_ctx);
+                }
+            } else {
+                fprintf(stderr, "Erreur de lecture d'une ligne2\n");
+                fclose(fichier);
+                return;
+            }
+            //printf("Champ adrMAC: %s\n", adrMACChar);
+            
+            /*token = strtok(NULL, ";");
             if (token) strncpy(adrMACChar, token, sizeof(adrMACChar)-1);
             else {
-                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fprintf(stderr, "Erreur de lecture d'une ligne2\n");
                 fclose(fichier);
                 return;
             }
@@ -105,9 +137,8 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 mac[j] = (uint8_t)strtol(tokenMAC, NULL, 16);  // Conversion base 16
                 tokenMAC = strtok(NULL, ":");
                 j++;
-            }
+            }*/
             
-            int numSwitch = 1;
             if (type == 2) {
                 reseau->sommets[i].type = TYPE_SWITCH;
                 init_sommet(&reseau->sommets[i]);
@@ -115,24 +146,25 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 for (int k=0; k<6; k++) { reseau->sommets[i].objet.sw.adrMAC[k] = mac[k]; }
                 
                 token = strtok(NULL, ";");
+                //printf("Champ nbPorts: %s\n", token);
                 if (token) nbPorts = atoi(token);
                 else {
-                    fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                    fprintf(stderr, "Erreur de lecture d'une ligne3\n");
                     fclose(fichier);
                     return;
                 }
 
                 token = strtok(NULL, ";");
+                //printf("Champ priorite: %s\n", token);
                 if (token) priorite = atoi(token);
                 else {
-                    fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                    fprintf(stderr, "Erreur de lecture d'une ligne4\n");
                     fclose(fichier);
                     return;
                 }
                 
-                char *nomSW = "sw ";
-                nomSW[3] = numSwitch;
-                numSwitch++;
+                char nomSW[32];
+                sprintf(nomSW, "sw%d", numSwitch++);
                 
                 reseau->sommets[i].objet.sw.nb_ports = nbPorts;
                 reseau->sommets[i].objet.sw.priorite = priorite;
@@ -140,14 +172,13 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 
                 reseau->sommets[i].objet.sw.tabCommutation = realloc(reseau->sommets[i].objet.sw.tabCommutation, sizeof(Commutation) * reseau->sommets[i].objet.sw.nb_ports);
                 if (reseau->sommets[i].objet.sw.tabCommutation != NULL) {
-                    for (size_t i = 0; i < nbPorts; i++) {
-                        memset(reseau->sommets[i].objet.sw.tabCommutation[i].adrMAC, 0, 6);
-                        reseau->sommets[i].objet.sw.tabCommutation[i].port = 0;
+                    for (size_t j = 0; j < nbPorts; j++) {
+                        memset(reseau->sommets[i].objet.sw.tabCommutation[j].adrMAC, 0, 6);
+                        reseau->sommets[i].objet.sw.tabCommutation[j].port = 0;
                     }
                 }
             }
             
-            int numSt = 1;
             if (type == 1) {
                 reseau->sommets[i].type = TYPE_STATION;
                 init_sommet(&reseau->sommets[i]);
@@ -158,25 +189,25 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 token = strtok(NULL, ";");
                 if (token) strncpy(adrIPChar, token, sizeof(adrIPChar)-1);
                 else {
-                    fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                    fprintf(stderr, "Erreur de lecture d'une ligne5\n");
                     fclose(fichier);
                     return;
                 }
+                //printf("Champ adrIP: %s\n", adrIPChar);
                 
                 IP ip[4];
-                char *tokenIP = strtok(adrMACChar, ":");
-                j = 0;
+                char *tokenIP = strtok(adrIPChar, ".");
+                int j = 0;
                 while (tokenIP != NULL && j < 4) {
-                    ip[j] = (uint8_t)strtol(tokenIP, NULL, 16);  // Conversion base 16
-                    tokenIP = strtok(NULL, ":");
+                    ip[j] = (uint8_t)strtol(tokenIP, NULL, 10);  // Conversion base 10
+                    tokenIP = strtok(NULL, ".");
                     j++;
                 }
                 for (int k=0; k<4; k++) { reseau->sommets[i].objet.station.adrIP[k] = ip[k]; }
                 
-                char *nomSt = "st ";
-                nomSt[3] = numSt;
+                char nomSt[32];
+                sprintf(nomSt, "st%d", numSt++);
                 strcpy(reseau->sommets[i].objet.station.nom, nomSt);
-                numSt++;
             }
         }
         
@@ -187,26 +218,29 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
             char *token = strtok(ligne, ";");
             if (token) numS1 = atoi(token);
             else {
-                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fprintf(stderr, "Erreur de lecture d'une ligne6\n");
                 fclose(fichier);
                 return;
             }
+            //printf("Champ s1: %s\n", token);
             
             token = strtok(NULL, ";");
             if (token) numS2 = atoi(token);
             else {
-                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fprintf(stderr, "Erreur de lecture d'une ligne7\n");
                 fclose(fichier);
                 return;
             }
+            //printf("Champ s2: %s\n", token);
             
             token = strtok(NULL, ";");
             if (token) poidsLien = atoi(token);
             else {
-                fprintf(stderr, "Erreur de lecture d'une ligne\n");
+                fprintf(stderr, "Erreur de lecture d'une ligne8\n");
                 fclose(fichier);
                 return;
             }
+            //printf("Champ poids: %s\n", token);
             
             reseau->liens[i].s1 = &reseau->sommets[numS1];
             reseau->liens[i].s2 = &reseau->sommets[numS2];
