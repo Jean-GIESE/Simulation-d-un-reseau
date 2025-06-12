@@ -171,12 +171,16 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 strcpy(reseau->sommets[i].objet.sw.nom, nomSW);
                 
                 reseau->sommets[i].objet.sw.tabCommutation = realloc(reseau->sommets[i].objet.sw.tabCommutation, sizeof(Commutation) * reseau->sommets[i].objet.sw.nb_ports);
-                if (reseau->sommets[i].objet.sw.tabCommutation != NULL) {
+                reseau->sommets[i].objet.sw.etat_ports = malloc(nbPorts * sizeof(EtatPort));
+                if ((reseau->sommets[i].objet.sw.tabCommutation != NULL) && (reseau->sommets[i].objet.sw.etat_ports != NULL)) {
                     for (size_t j = 0; j < nbPorts; j++) {
                         memset(reseau->sommets[i].objet.sw.tabCommutation[j].adrMAC, 0, 6);
                         reseau->sommets[i].objet.sw.tabCommutation[j].port = 0;
+                        reseau->sommets[i].objet.sw.etat_ports[j] = BLOQUE;
                     }
                 }
+                reseau->sommets[i].objet.sw.capacite = nbPorts;
+                reseau->sommets[i].objet.sw.nb_entrees = 0;
             }
             
             if (type == 1) {
@@ -245,6 +249,31 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
             reseau->liens[i].s1 = &reseau->sommets[numS1];
             reseau->liens[i].s2 = &reseau->sommets[numS2];
             reseau->liens[i].poids = poidsLien;
+            
+            if (reseau->liens[i].s1->type == TYPE_SWITCH) {
+                Switch *sw1 = &reseau->liens[i].s1->objet.sw;
+                if (sw1->ports_utilises < sw1->nb_ports) {
+                    reseau->liens[i].port_s1 = sw1->ports_utilises++;
+                } else {
+                    fprintf(stderr, "Plus de ports disponibles sur %s\n", sw1->nom);
+                    exit(1);
+                }
+            } else {
+                reseau->liens[i].port_s1 = 0; // station, pas de port
+            }
+
+            if (reseau->liens[i].s2->type == TYPE_SWITCH) {
+                Switch *sw2 = &reseau->liens[i].s2->objet.sw;
+                if (sw2->ports_utilises < sw2->nb_ports) {
+                    reseau->liens[i].port_s2 = sw2->ports_utilises++;
+                } else {
+                    fprintf(stderr, "Plus de ports disponibles sur %s\n", sw2->nom);
+                    exit(1);
+                }
+            } else {
+                reseau->liens[i].port_s2 = 0;
+            }
+
             
             i++;
         }

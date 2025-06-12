@@ -9,6 +9,7 @@ typedef uint8_t MAC;
 typedef uint8_t IP;
 
 typedef enum EtatPort {
+    DESACTIVE,
     BLOQUE,
     ACTIF
 } EtatPort;
@@ -43,6 +44,7 @@ typedef struct Switch {
     Commutation *tabCommutation;
     size_t nb_entrees;
     size_t capacite;
+    size_t ports_utilises;
 } Switch;
 
 typedef enum TypeObjet{
