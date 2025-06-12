@@ -8,6 +8,11 @@
 typedef uint8_t MAC;
 typedef uint8_t IP;
 
+typedef enum EtatPort {
+    BLOQUE,
+    ACTIF
+} EtatPort;
+
 typedef struct Station {
     MAC adrMAC[6];
     IP adrIP[4];
@@ -34,10 +39,13 @@ typedef struct Switch {
     MAC adrMAC[6];
     size_t nb_ports;
     uint16_t priorite;
+    EtatPort *etat_ports;
     Commutation *tabCommutation;
+    size_t nb_entrees;
+    size_t capacite;
 } Switch;
 
-typedef enum {
+typedef enum TypeObjet{
     TYPE_SWITCH,
     TYPE_STATION
 } TypeObjet;
@@ -50,15 +58,12 @@ typedef struct Sommet {
     } objet;
 } Sommet;
 
-typedef enum TypeSommet {
-    SWITCH,
-    STATION
-} TypeSommet;
-
 typedef struct Lien {
     Sommet *s1;
     Sommet *s2;
     uint16_t poids;
+    uint32_t port_s1;
+    uint32_t port_s2;
 } Lien;
 
 typedef struct Reseau {
@@ -67,6 +72,14 @@ typedef struct Reseau {
   Sommet *sommets;
   Lien *liens;
 } Reseau;
+
+typedef struct BPDU{
+    uint16_t priorite_root;
+    MAC mac_root[6];
+    uint16_t cout_chemin;
+    MAC mac_emetteur[6];
+    uint16_t port_emetteur;
+} BPDU;
 
 void init_reseau(Reseau *r);
 void deinit_reseau(Reseau *r);
