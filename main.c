@@ -36,6 +36,7 @@ int main()
     
     Reseau reseau;
     creer_reseau("/adhome/j/jg/jgiese/S21/SAE/kk/mylan_nocycle", &reseau);
+    stp(&reseau);
     afficher_reseau(&reseau);
 
     Trame t;
