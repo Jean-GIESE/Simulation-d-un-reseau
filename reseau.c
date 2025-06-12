@@ -249,7 +249,6 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
             i++;
         }
         
-        deinit_reseau(reseau);
         fclose(fichier);
     }
     else {
@@ -257,35 +256,45 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
     }
 }
 
+
 void init_sommet(Sommet *s) {
     if (!s) return;
 
-    // Nettoyer la mémoire de la structure (précaution)
+    TypeObjet type_courant = s->type;
     memset(s, 0, sizeof(Sommet));
+    s->type = type_courant;
 
     switch (s->type) {
         case TYPE_STATION:
-            // Initialisation d’une station
             memset(s->objet.station.adrMAC, 0, 6);
             memset(s->objet.station.adrIP, 0, 4);
             strcpy(s->objet.station.nom, "Station par défaut");
             break;
 
         case TYPE_SWITCH:
-            // Initialisation d’un switch
             memset(s->objet.sw.adrMAC, 0, 6);
-            s->objet.sw.nb_ports = 4; // valeur par défaut
+            s->objet.sw.capacite = 4;
+            s->objet.sw.nb_ports = 0;
             s->objet.sw.priorite = 0;
+            s->objet.sw.nb_entrees = 0;
             strcpy(s->objet.sw.nom, "Switch par défaut");
 
-            // Allocation dynamique de la table de commutation
-            s->objet.sw.tabCommutation = malloc(sizeof(Commutation) * s->objet.sw.nb_ports);
+            s->objet.sw.tabCommutation = malloc(sizeof(Commutation) * s->objet.sw.capacite);
             if (s->objet.sw.tabCommutation != NULL) {
-                for (size_t i = 0; i < s->objet.sw.nb_ports; i++) {
+                for (size_t i = 0; i < s->objet.sw.capacite; i++) {
                     memset(s->objet.sw.tabCommutation[i].adrMAC, 0, 6);
                     s->objet.sw.tabCommutation[i].port = 0;
                 }
             }
+
+            s->objet.sw.etat_ports = malloc(sizeof(EtatPort) * s->objet.sw.capacite);
+            if (s->objet.sw.etat_ports != NULL) {
+                for (size_t i = 0; i < s->objet.sw.capacite; i++) {
+                    s->objet.sw.etat_ports[i] = ACTIF;
+                }
+            }
+
+            s->objet.sw.nb_entrees = 0;
             break;
 
         default:
@@ -296,9 +305,15 @@ void init_sommet(Sommet *s) {
 void deinit_sommet(Sommet *s) {
     if (!s) return;
 
-    if (s->type == TYPE_SWITCH && s->objet.sw.tabCommutation != NULL) {
+    if (s->type == TYPE_SWITCH) {
+      if(s->objet.sw.tabCommutation != NULL){
         free(s->objet.sw.tabCommutation);
         s->objet.sw.tabCommutation = NULL;
+      }
+      if(s->objet.sw.etat_ports != NULL){
+        free(s->objet.sw.etat_ports);
+        s->objet.sw.etat_ports = NULL;
+      }
     }
 }
 
@@ -306,8 +321,31 @@ void init_trame(Trame *t) {
     memset(t, 0, sizeof(Trame));
 }
 
-void deinit_trame(Trame *t) {
-    memset(t, 0, sizeof(Trame));
+void init_lien(Lien *l) {
+  if (!l) return;
+
+  l->s1 = NULL;
+  l->s2 = NULL;
+  l->poids = 0;
+  l->port_s1 = 0;
+  l->port_s2 = 0;
+}
+
+void deinit_lien(Lien *l) {
+  if (!l) return;
+
+  l->s1 = NULL;
+  l->s2 = NULL;
+}
+
+void init_bpdu(BPDU *b) {
+  if (!b) return;
+
+  b->priorite_root = 0;
+  memset(b->mac_root, 0, 6);
+  b->cout_chemin = 0;
+  memset(b->mac_emetteur, 0, 6);
+  b->port_emetteur = 0;
 }
 
 void print_mac(const MAC mac[6]) {
@@ -325,10 +363,10 @@ void print_ip(const IP ip[4]) {
 }
 
 void afficher_station(const Station *st) {
-    if (!st) return;
-    printf("Station \"%s\"\n", st->nom);
-    printf("  MAC : "); print_mac(st->adrMAC); printf("\n");
-    printf("  IP  : "); print_ip(st->adrIP); printf("\n");
+  if (!st) return;
+  printf("Station \"%s\"\n", st->nom);
+  printf("  MAC : "); print_mac(st->adrMAC); printf("\n");
+  printf("  IP  : "); print_ip(st->adrIP); printf("\n");
 }
 
 void afficher_switch(const Switch *sw) {
@@ -340,7 +378,7 @@ void afficher_switch(const Switch *sw) {
 
     if (sw->tabCommutation) {
         printf("  Table de commutation :\n");
-        for (size_t i = 0; i < sw->nb_ports; i++) {
+        for (size_t i = 0; i < sw->nb_entrees; i++) {
             printf("   Port %zu : MAC = ", i);
             print_mac(sw->tabCommutation[i].adrMAC);
             printf(", port associé = %d\n", sw->tabCommutation[i].port);

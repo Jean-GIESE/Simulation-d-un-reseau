@@ -36,6 +36,7 @@ int main()
     
     Reseau reseau;
     creer_reseau("/adhome/j/jg/jgiese/S21/SAE/kk/mylan", &reseau);
+    afficher_reseau(&reseau);
 
     Trame t;
     
@@ -43,9 +44,8 @@ int main()
 
     afficher_trame_user(&t); // Affiche des zéros partout
     afficher_trame(&t);      // Affichage brut : que des 00
-
-    // Quand on a fini
-    deinit_trame(&t); // "Nettoyage" (remise à zéro, optionnel ici)
+    
+    deinit_reseau(&reseau);
 
     return 0;
 }
