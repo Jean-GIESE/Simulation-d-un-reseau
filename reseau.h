@@ -12,7 +12,6 @@ typedef enum EtatPort {
     DESACTIVE,
     BLOQUE,
     ACTIF,
-    DESACTIVE
 } EtatPort;
 
 typedef struct Station {
@@ -103,11 +102,5 @@ void afficher_lien(const Lien *l);
 void afficher_reseau(const Reseau *r);
 void afficher_trame_user(const Trame *t);
 void afficher_trame(const Trame *t);
-void initialiser_bpdu(Switch *sw, BPDU *bpdu, uint16_t port);
-int comparer_bpdu(const BPDU *b1, const BPDU *b2);
-int traiter_bpdu(Switch *sw, BPDU *courant, const BPDU *recu, uint16_t port);
-void envoyer_bpdu(Switch *sw, Reseau *reseau, size_t id_sw, BPDU *bpdu_table);
-void stp(Reseau *reseau);
-void apprendre_mac(Switch *sw, const MAC adr_source, size_t port_entree);
 
 #endif

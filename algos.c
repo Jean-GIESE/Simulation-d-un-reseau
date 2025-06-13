@@ -22,6 +22,39 @@ int trouver_station_par_mac(Reseau *r, const MAC mac[6]) {
     }
     return -1;
 }
+
+int creer_trame_depuis_noms(const Reseau *r, const char *nom_source, const char *nom_dest, Trame *t) {
+    if (!r || !nom_source || !nom_dest || !t) return -1;
+
+    MAC mac_source[6], mac_dest[6];
+    int found_src = 0, found_dst = 0;
+
+    for (size_t i = 0; i < r->nb_sommets; i++) {
+        if (r->sommets[i].type != TYPE_STATION) continue;
+        if (found_src && found_dst) break;
+        Station *st = &r->sommets[i].objet.station;
+        if (strcmp(st->nom, nom_source) == 0) {
+            memcpy(mac_source, st->adrMAC, 6);
+            found_src = 1;
+        }
+        if (strcmp(st->nom, nom_dest) == 0) {
+            memcpy(mac_dest, st->adrMAC, 6);
+            found_dst = 1;
+        }
+    }
+
+    if (!found_src || !found_dst) {
+        fprintf(stderr, "Erreur : station %s ou %s introuvable\n", nom_source, nom_dest);
+        return -1;
+    }
+
+    init_trame(t);
+    memcpy(t->source, mac_source, 6);
+    memcpy(t->destination, mac_dest, 6);
+    strcpy((char*)t->donnees, "Hello depuis creer_trame_depuis_noms");
+    return 0;
+}
+
 void envoyer_trame(Reseau *r, size_t id_station, Trame *t) {
     if (!r || !t || id_station >= r->nb_sommets) return;
 
@@ -65,12 +98,26 @@ void transmettre_trame(Reseau *r, Sommet *current, Trame *t, uint32_t port_entre
             break;
         }
     }
-    if (!connue && sw->nb_entrees < sw->capacite) {
-        memcpy(sw->tabCommutation[sw->nb_entrees].adrMAC, t->source, 6);
-        sw->tabCommutation[sw->nb_entrees].port = port_entree;
-        sw->nb_entrees++;
-        printf("[%s] Nouvelle adresse source apprise sur le port %u, total entrées : %zu\n",
-               sw->nom, port_entree, sw->nb_entrees);
+    if (!connue) {
+      // Si la table est pleine, doubler sa capacité
+      if (sw->nb_entrees >= sw->capacite) {
+          size_t nouvelle_capacite = sw->capacite * 2;
+          Commutation *new_tab = realloc(sw->tabCommutation, nouvelle_capacite * sizeof(Commutation));
+          if (new_tab == NULL) {
+              fprintf(stderr, "[%s] ERREUR : Échec du realloc, apprentissage impossible\n", sw->nom);
+              return;
+          }
+          sw->tabCommutation = new_tab;
+          sw->capacite = nouvelle_capacite;
+          printf("[%s] Table de commutation agrandie à %zu entrées\n", sw->nom, sw->capacite);
+      }
+
+      // Ajout de l'entrée après avoir assuré la place
+      memcpy(sw->tabCommutation[sw->nb_entrees].adrMAC, t->source, 6);
+      sw->tabCommutation[sw->nb_entrees].port = port_entree;
+      sw->nb_entrees++;
+      printf("[%s] Nouvelle adresse source apprise sur le port %u, total entrées : %zu\n",
+            sw->nom, port_entree, sw->nb_entrees);
     }
 
     // Recherche du port correspondant à l'adresse destination
@@ -118,3 +165,120 @@ void transmettre_trame(Reseau *r, Sommet *current, Trame *t, uint32_t port_entre
         }
     }
 }
+
+
+
+// Initialise un BPDU avec les infos du switch (considéré comme racine)
+void initialiser_bpdu(Switch *sw, BPDU *bpdu, uint16_t port) {
+    init_bpdu(bpdu);
+    bpdu->priorite_root = sw->priorite;
+    memcpy(bpdu->mac_root, sw->adrMAC, 6);
+    bpdu->cout_chemin = 0;
+    memcpy(bpdu->mac_emetteur, sw->adrMAC, 6);
+    bpdu->port_emetteur = port;
+}
+
+
+
+// Compare deux BPDU (retourne -1 si b1 est meilleur, 1 si b2 est meilleur, 0 si égaux)
+int comparer_bpdu(const BPDU *b1, const BPDU *b2) {
+    if (b1->priorite_root != b2->priorite_root)
+        return (b1->priorite_root < b2->priorite_root) ? -1 : 1;
+    
+    if (b1->cout_chemin != b2->cout_chemin)
+        return (b1->cout_chemin < b2->cout_chemin) ? -1 : 1;
+
+    int cmp = memcmp(b1->mac_root, b2->mac_root, 6);
+    if (cmp != 0) return (cmp < 0) ? -1 : 1;
+
+    cmp = memcmp(b1->mac_emetteur, b2->mac_emetteur, 6);
+    if (cmp != 0) return (cmp < 0) ? -1 : 1;
+
+    return 0;
+}
+
+// Traite un BPDU reçu, retourne 1 si le switch a mis à jour sa configuration
+int traiter_bpdu(Switch *sw, BPDU *courant, const BPDU *recu, uint16_t port) {
+    BPDU nouveau = *recu;
+    nouveau.cout_chemin += 1;
+
+    if (comparer_bpdu(&nouveau, courant) < 0) {
+        *courant = nouveau;
+        return 1;
+    }
+    return 0;
+}
+
+// Envoie un BPDU à tous les voisins d'un switch
+void envoyer_bpdu(Switch *sw, Reseau *reseau, size_t id_sw, BPDU *bpdu_table) {
+    for (size_t i = 0; i < reseau->nb_liens; i++) {
+        Lien *lien = &reseau->liens[i];
+
+        if (lien->s1->type == TYPE_SWITCH && lien->s2->type == TYPE_SWITCH) {
+            size_t voisin_id = 0;
+            if (lien->s1 == &reseau->sommets[id_sw]) voisin_id = lien->s2 - reseau->sommets;
+            else if (lien->s2 == &reseau->sommets[id_sw]) voisin_id = lien->s1 - reseau->sommets;
+            else continue;
+
+            Switch *voisin = &reseau->sommets[voisin_id].objet.sw;
+            BPDU recu;
+            initialiser_bpdu(sw, &recu, 0);
+
+            traiter_bpdu(voisin, &bpdu_table[voisin_id], &recu, 0);
+        }
+    }
+}
+
+// Lancement du protocole STP jusqu'à convergence
+void stp(Reseau *reseau) {
+    BPDU *bpdu_table = malloc(reseau->nb_sommets * sizeof(BPDU));
+
+    for (size_t i = 0; i < reseau->nb_sommets; i++) {
+        if (reseau->sommets[i].type == TYPE_SWITCH) {
+            initialiser_bpdu(&reseau->sommets[i].objet.sw, &bpdu_table[i], 0);
+        }
+    }
+
+    int convergence = 0;
+    while (!convergence) {
+        convergence = 1;
+        for (size_t i = 0; i < reseau->nb_sommets; i++) {
+            if (reseau->sommets[i].type == TYPE_SWITCH) {
+                Switch *sw = &reseau->sommets[i].objet.sw;
+                envoyer_bpdu(sw, reseau, i, bpdu_table);
+            }
+        }
+    }
+
+    printf("\nSTP converge. Switch racines :\n");
+    for (size_t i = 0; i < reseau->nb_sommets; i++) {
+        if (reseau->sommets[i].type == TYPE_SWITCH) {
+            printf("%s : root = ", reseau->sommets[i].objet.sw.nom);
+            print_mac(bpdu_table[i].mac_root);
+            printf("\n");
+        }
+    }
+
+    free(bpdu_table);
+}
+
+/*
+
+void apprendre_mac(Switch *sw, const MAC adr_source, size_t port_entree) {
+    // Vérifier si déjà connue
+    for (size_t i = 0; i < sw->nb_entrees; i++) {
+        if (memcmp(sw->tabCommutation[i].adrMAC, adr_source, 6) == 0) {
+            return; // Déjà connue
+        }
+    }
+
+    // Nouvelle entrée
+    if (sw->nb_entrees < sw->capacite) {
+        memcpy(sw->tabCommutation[sw->nb_entrees].adrMAC, adr_source, 6);
+        sw->tabCommutation[sw->nb_entrees].port = port_entree;
+        sw->nb_entrees++;
+    } else {
+        fprintf(stderr, "Table de commutation pleine pour %s\n", sw->nom);
+    }
+}
+    */
