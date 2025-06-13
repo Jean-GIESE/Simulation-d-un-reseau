@@ -141,7 +141,7 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
             if (type == 2) {
                 reseau->sommets[i].type = TYPE_SWITCH;
                 init_sommet(&reseau->sommets[i]);
-      
+                
                 for (int k=0; k<6; k++) { reseau->sommets[i].objet.sw.adrMAC[k] = mac[k]; }
                 
                 token = strtok(NULL, ";");
@@ -170,12 +170,16 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
                 strcpy(reseau->sommets[i].objet.sw.nom, nomSW);
                 
                 reseau->sommets[i].objet.sw.tabCommutation = realloc(reseau->sommets[i].objet.sw.tabCommutation, sizeof(Commutation) * reseau->sommets[i].objet.sw.nb_ports);
-                if (reseau->sommets[i].objet.sw.tabCommutation != NULL) {
+                reseau->sommets[i].objet.sw.etat_ports = malloc(nbPorts * sizeof(EtatPort));
+                if ((reseau->sommets[i].objet.sw.tabCommutation != NULL) && (reseau->sommets[i].objet.sw.etat_ports != NULL)) {
                     for (size_t j = 0; j < nbPorts; j++) {
                         memset(reseau->sommets[i].objet.sw.tabCommutation[j].adrMAC, 0, 6);
                         reseau->sommets[i].objet.sw.tabCommutation[j].port = 0;
+                        reseau->sommets[i].objet.sw.etat_ports[j] = BLOQUE;
                     }
                 }
+                reseau->sommets[i].objet.sw.capacite = nbPorts;
+                reseau->sommets[i].objet.sw.nb_entrees = 0;
             }
             
             if (type == 1) {
@@ -244,6 +248,31 @@ void creer_reseau(char* nomFichier, Reseau *reseau)
             reseau->liens[i].s1 = &reseau->sommets[numS1];
             reseau->liens[i].s2 = &reseau->sommets[numS2];
             reseau->liens[i].poids = poidsLien;
+            
+            if (reseau->liens[i].s1->type == TYPE_SWITCH) {
+                Switch *sw1 = &reseau->liens[i].s1->objet.sw;
+                if (sw1->ports_utilises < sw1->nb_ports) {
+                    reseau->liens[i].port_s1 = sw1->ports_utilises++;
+                } else {
+                    fprintf(stderr, "Plus de ports disponibles sur %s\n", sw1->nom);
+                    exit(1);
+                }
+            } else {
+                reseau->liens[i].port_s1 = 0; // station, pas de port
+            }
+
+            if (reseau->liens[i].s2->type == TYPE_SWITCH) {
+                Switch *sw2 = &reseau->liens[i].s2->objet.sw;
+                if (sw2->ports_utilises < sw2->nb_ports) {
+                    reseau->liens[i].port_s2 = sw2->ports_utilises++;
+                } else {
+                    fprintf(stderr, "Plus de ports disponibles sur %s\n", sw2->nom);
+                    exit(1);
+                }
+            } else {
+                reseau->liens[i].port_s2 = 0;
+            }
+
             
             i++;
         }
@@ -483,3 +512,119 @@ void afficher_trame(const Trame *t) {
     }
     printf("\n");
 }
+
+
+// Initialise un BPDU avec les infos du switch (considéré comme racine)
+void initialiser_bpdu(Switch *sw, BPDU *bpdu, uint16_t port) {
+    bpdu->priorite_root = sw->priorite;
+    memcpy(bpdu->mac_root, sw->adrMAC, 6);
+    bpdu->cout_chemin = 0;
+    memcpy(bpdu->mac_emetteur, sw->adrMAC, 6);
+    bpdu->port_emetteur = port;
+}
+
+
+
+// Compare deux BPDU (retourne -1 si b1 est meilleur, 1 si b2 est meilleur, 0 si égaux)
+int comparer_bpdu(const BPDU *b1, const BPDU *b2) {
+    if (b1->priorite_root != b2->priorite_root)
+        return (b1->priorite_root < b2->priorite_root) ? -1 : 1;
+
+    int cmp = memcmp(b1->mac_root, b2->mac_root, 6);
+    if (cmp != 0) return (cmp < 0) ? -1 : 1;
+
+    if (b1->cout_chemin != b2->cout_chemin)
+        return (b1->cout_chemin < b2->cout_chemin) ? -1 : 1;
+
+    cmp = memcmp(b1->mac_emetteur, b2->mac_emetteur, 6);
+    if (cmp != 0) return (cmp < 0) ? -1 : 1;
+
+    return 0;
+}
+
+// Traite un BPDU reçu, retourne 1 si le switch a mis à jour sa configuration
+int traiter_bpdu(Switch *sw, BPDU *courant, const BPDU *recu, uint16_t port) {
+    BPDU nouveau = *recu;
+    nouveau.cout_chemin += 1;
+
+    if (comparer_bpdu(&nouveau, courant) < 0) {
+        *courant = nouveau;
+        return 1;
+    }
+    return 0;
+}
+
+// Envoie un BPDU à tous les voisins d'un switch
+void envoyer_bpdu(Switch *sw, Reseau *reseau, size_t id_sw, BPDU *bpdu_table) {
+    for (size_t i = 0; i < reseau->nb_liens; i++) {
+        Lien *lien = &reseau->liens[i];
+
+        if (lien->s1->type == TYPE_SWITCH && lien->s2->type == TYPE_SWITCH) {
+            size_t voisin_id = 0;
+            if (lien->s1 == &reseau->sommets[id_sw]) voisin_id = lien->s2 - reseau->sommets;
+            else if (lien->s2 == &reseau->sommets[id_sw]) voisin_id = lien->s1 - reseau->sommets;
+            else continue;
+
+            Switch *voisin = &reseau->sommets[voisin_id].objet.sw;
+            BPDU recu;
+            initialiser_bpdu(sw, &recu, 0);
+
+            traiter_bpdu(voisin, &bpdu_table[voisin_id], &recu, 0);
+        }
+    }
+}
+
+// Lancement du protocole STP jusqu'à convergence
+void stp(Reseau *reseau) {
+    BPDU *bpdu_table = malloc(reseau->nb_sommets * sizeof(BPDU));
+
+    for (size_t i = 0; i < reseau->nb_sommets; i++) {
+        if (reseau->sommets[i].type == TYPE_SWITCH) {
+            initialiser_bpdu(&reseau->sommets[i].objet.sw, &bpdu_table[i], 0);
+        }
+    }
+
+    int convergence = 0;
+    while (!convergence) {
+        convergence = 1;
+        for (size_t i = 0; i < reseau->nb_sommets; i++) {
+            if (reseau->sommets[i].type == TYPE_SWITCH) {
+                Switch *sw = &reseau->sommets[i].objet.sw;
+                envoyer_bpdu(sw, reseau, i, bpdu_table);
+            }
+        }
+    }
+
+    printf("\nSTP converge. Switch racines :\n");
+    for (size_t i = 0; i < reseau->nb_sommets; i++) {
+        if (reseau->sommets[i].type == TYPE_SWITCH) {
+            printf("%s : root = ", reseau->sommets[i].objet.sw.nom);
+            print_mac(bpdu_table[i].mac_root);
+            printf("\n");
+        }
+    }
+
+    free(bpdu_table);
+}
+
+
+/*
+void apprendre_mac(Switch *sw, const MAC adr_source, size_t port_entree) {
+    // Vérifier si déjà connue
+    for (size_t i = 0; i < sw->nb_entrees; i++) {
+        if (memcmp(sw->tabCommutation[i].adrMAC, adr_source, 6) == 0) {
+            return; // Déjà connue
+        }
+    }
+
+    // Nouvelle entrée
+    if (sw->nb_entrees < sw->capacite) {
+        memcpy(sw->tabCommutation[sw->nb_entrees].adrMAC, adr_source, 6);
+        sw->tabCommutation[sw->nb_entrees].port = port_entree;
+        sw->nb_entrees++;
+    } else {
+        fprintf(stderr, "Table de commutation pleine pour %s\n", sw->nom);
+    }
+}
+*/
+
