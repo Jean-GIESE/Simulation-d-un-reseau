@@ -74,7 +74,6 @@ void envoyer_trame(Reseau *r, size_t id_station, Trame *t) {
 }
 
 
-
 void transmettre_trame(Reseau *r, Sommet *current, Trame *t, uint32_t port_entree) {
     if (!r || !current || !t) return;
 
@@ -185,12 +184,12 @@ int comparer_bpdu(const BPDU *b1, const BPDU *b2) {
     if (b1->priorite_root != b2->priorite_root)
         return (b1->priorite_root < b2->priorite_root) ? -1 : 1;
     
-    if (b1->cout_chemin != b2->cout_chemin)
-        return (b1->cout_chemin < b2->cout_chemin) ? -1 : 1;
-
     int cmp = memcmp(b1->mac_root, b2->mac_root, 6);
     if (cmp != 0) return (cmp < 0) ? -1 : 1;
 
+    if (b1->cout_chemin != b2->cout_chemin)
+    return (b1->cout_chemin < b2->cout_chemin) ? -1 : 1;
+    
     cmp = memcmp(b1->mac_emetteur, b2->mac_emetteur, 6);
     if (cmp != 0) return (cmp < 0) ? -1 : 1;
 
@@ -198,41 +197,64 @@ int comparer_bpdu(const BPDU *b1, const BPDU *b2) {
 }
 
 // Traite un BPDU reçu, retourne 1 si le switch a mis à jour sa configuration
-int traiter_bpdu(Switch *sw, BPDU *courant, const BPDU *recu, uint16_t port) {
+int traiter_bpdu(Switch *sw, BPDU *courant, const BPDU *recu, uint16_t port, uint16_t cout_lien) {
     BPDU nouveau = *recu;
-    nouveau.cout_chemin += 1;
+    nouveau.cout_chemin += cout_lien;
+
+    nouveau.port_emetteur = port;
 
     if (comparer_bpdu(&nouveau, courant) < 0) {
         *courant = nouveau;
         return 1;
     }
-    return 0;
+    return 0; 
 }
 
+// Envoie un BPDU à tous les voisins d'un switch
 // Envoie un BPDU à tous les voisins d'un switch
 void envoyer_bpdu(Switch *sw, Reseau *reseau, size_t id_sw, BPDU *bpdu_table) {
     for (size_t i = 0; i < reseau->nb_liens; i++) {
         Lien *lien = &reseau->liens[i];
 
+        // On s'intéresse uniquement aux liens entre switches
         if (lien->s1->type == TYPE_SWITCH && lien->s2->type == TYPE_SWITCH) {
-            size_t voisin_id = 0;
-            if (lien->s1 == &reseau->sommets[id_sw]) voisin_id = lien->s2 - reseau->sommets;
-            else if (lien->s2 == &reseau->sommets[id_sw]) voisin_id = lien->s1 - reseau->sommets;
-            else continue;
+            size_t voisin_id = (lien->s1 == &reseau->sommets[id_sw]) ? 
+                               (lien->s2 - reseau->sommets) : 
+                               (lien->s1 == &reseau->sommets[id_sw] ? (lien->s1 - reseau->sommets) : SIZE_MAX);
+
+            if (voisin_id == SIZE_MAX) continue; // Pas un voisin du switch courant
 
             Switch *voisin = &reseau->sommets[voisin_id].objet.sw;
-            BPDU recu;
-            initialiser_bpdu(sw, &recu, 0);
 
-            traiter_bpdu(voisin, &bpdu_table[voisin_id], &recu, 0);
+            // On prépare un BPDU "envoyé" : celui du switch courant,
+            // avec coût chemin augmenté du coût du lien entre sw et voisin
+            BPDU bpdu_envoye = bpdu_table[id_sw];
+            
+            // Ajout du coût du lien au BPDU envoyé
+            bpdu_envoye.cout_chemin += lien->poids;
+
+            // On indique que c’est le port d’émission de sw sur ce lien
+            bpdu_envoye.port_emetteur = (lien->s1 == &reseau->sommets[id_sw]) ? lien->port_s1 : lien->port_s2;
+
+            // Traiter le BPDU reçu par le voisin sur son port correspondant
+            uint16_t port_entrant_voisin = (lien->s1 == &reseau->sommets[voisin_id]) ? lien->port_s1 : lien->port_s2;
+
+            int updated = traiter_bpdu(voisin, &bpdu_table[voisin_id], &bpdu_envoye, port_entrant_voisin, 0 /* on ajoute plus le cout ici car déjà dans bpdu_envoye*/);
+
         }
     }
 }
 
+
 // Lancement du protocole STP jusqu'à convergence
 void stp(Reseau *reseau) {
     BPDU *bpdu_table = malloc(reseau->nb_sommets * sizeof(BPDU));
+    if (!bpdu_table) {
+        fprintf(stderr, "Erreur allocation mémoire\n");
+        return;
+    }
 
+    // Initialisation des BPDU avec infos des switches
     for (size_t i = 0; i < reseau->nb_sommets; i++) {
         if (reseau->sommets[i].type == TYPE_SWITCH) {
             initialiser_bpdu(&reseau->sommets[i].objet.sw, &bpdu_table[i], 0);
@@ -241,28 +263,39 @@ void stp(Reseau *reseau) {
 
     int convergence = 0;
     while (!convergence) {
-        convergence = 1;
+        convergence = 1; // On part du principe que c’est convergé
+
+        // Parcours de tous les switches
         for (size_t i = 0; i < reseau->nb_sommets; i++) {
             if (reseau->sommets[i].type == TYPE_SWITCH) {
                 Switch *sw = &reseau->sommets[i].objet.sw;
+
+                // Avant d’envoyer les BPDU aux voisins, on mémorise l’état courant
+                BPDU bpdu_avant = bpdu_table[i];
+
+                // Envoie BPDU aux voisins et traitement des mises à jour
                 envoyer_bpdu(sw, reseau, i, bpdu_table);
+
+                // Si le BPDU a changé, on n’est pas encore convergé
+                if (comparer_bpdu(&bpdu_avant, &bpdu_table[i]) != 0) {
+                    convergence = 0;
+                }
             }
         }
     }
-
+    appliquer_etats_ports(reseau, bpdu_table);
     printf("\nSTP converge. Switch racines :\n");
     for (size_t i = 0; i < reseau->nb_sommets; i++) {
         if (reseau->sommets[i].type == TYPE_SWITCH) {
             printf("%s : root = ", reseau->sommets[i].objet.sw.nom);
             print_mac(bpdu_table[i].mac_root);
-            printf("\n");
+            printf(", coût = %d\n", bpdu_table[i].cout_chemin);
         }
     }
 
     free(bpdu_table);
 }
 
-/*
 
 void apprendre_mac(Switch *sw, const MAC adr_source, size_t port_entree) {
     // Vérifier si déjà connue
@@ -281,4 +314,48 @@ void apprendre_mac(Switch *sw, const MAC adr_source, size_t port_entree) {
         fprintf(stderr, "Table de commutation pleine pour %s\n", sw->nom);
     }
 }
-    */
+void appliquer_etats_ports(Reseau *reseau, BPDU *bpdu_table) {
+    // Réinitialiser tous les ports à BLOQUE par défaut
+    for (size_t i = 0; i < reseau->nb_sommets; i++) {
+        if (reseau->sommets[i].type == TYPE_SWITCH) {
+            Switch *sw = &reseau->sommets[i].objet.sw;
+            for (size_t p = 0; p < sw->nb_ports; p++) {
+                sw->etat_ports[p] = BLOQUE;
+            }
+        }
+    }
+
+    // Identifier les ports racines et désignés
+    for (size_t i = 0; i < reseau->nb_liens; i++) {
+        Lien *lien = &reseau->liens[i];
+        Sommet *s1 = lien->s1;
+        Sommet *s2 = lien->s2;
+
+        if (s1->type == TYPE_SWITCH && s2->type == TYPE_SWITCH) {
+            size_t id1 = s1 - reseau->sommets;
+            size_t id2 = s2 - reseau->sommets;
+            Switch *sw1 = &s1->objet.sw;
+            Switch *sw2 = &s2->objet.sw;
+
+            BPDU *bpdu1 = &bpdu_table[id1];
+            BPDU *bpdu2 = &bpdu_table[id2];
+
+            // On choisit le meilleur BPDU sur ce lien
+            int cmp = comparer_bpdu(bpdu1, bpdu2);
+
+            if (cmp < 0) {
+                // sw1 est meilleur, donc sw1 a un port désigné, sw2 port racine
+                sw1->etat_ports[lien->port_s1] = ACTIF;
+                sw2->etat_ports[lien->port_s2] = ACTIF;
+            } else if (cmp > 0) {
+                // sw2 est meilleur
+                sw2->etat_ports[lien->port_s2] = ACTIF;
+                sw1->etat_ports[lien->port_s1] = ACTIF;
+            } else {
+                // Égalité stricte : cas rare, on active les deux par défaut
+                sw1->etat_ports[lien->port_s1] = ACTIF;
+                sw2->etat_ports[lien->port_s2] = ACTIF;
+            }
+        }
+    }
+}

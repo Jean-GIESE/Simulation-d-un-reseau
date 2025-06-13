@@ -2,20 +2,19 @@
 #include "reseau.h" 
 #include "algos.h"
 
-#include <string.h>
-
 int main()
 { 
   
   Reseau reseau;
-  creer_reseau("/home/legerh/Base/kk//mylan_nocycle", &reseau);
-  //stp(&reseau);
-  
+  creer_reseau("/home/legerh/Base/kk//mylan", &reseau);
+
   afficher_reseau(&reseau);
+  stp(&reseau);
+  
   Trame t;
   creer_trame_depuis_noms(&reseau, "st1", "st8", &t);
   envoyer_trame(&reseau, trouver_station_par_nom(&reseau, "st1"), &t);
-  //afficher_reseau(&reseau);
+  afficher_reseau(&reseau);
   deinit_reseau(&reseau);
 
 /*
