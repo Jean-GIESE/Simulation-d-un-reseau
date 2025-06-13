@@ -10,7 +10,8 @@ typedef uint8_t IP;
 
 typedef enum EtatPort {
     BLOQUE,
-    ACTIF
+    ACTIF,
+    DESACTIVE
 } EtatPort;
 
 typedef struct Station {
