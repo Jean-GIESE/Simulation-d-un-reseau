@@ -21,7 +21,7 @@ $ git config --global user.email "[login]@unistra.fr"
 
 3. Cloner ce dépôt sur votre ordinateur personnel :
 ```sh
-$ git clone https://github.com/Jean-GIESE/Donjon-et-dragon.git
+$ git clone https://github.com/Jean-GIESE/Simulation-d-un-reseau.git
 ```
 Si vous n'avez pas le language C sur votre ordinateur, installez-le
 
