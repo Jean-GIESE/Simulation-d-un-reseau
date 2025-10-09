@@ -27,5 +27,5 @@ Si vous n'avez pas le language C sur votre ordinateur, installez-le
 
 ### Lancement de la simulation
 
-Allez dans le répertoire 'kk' et tapez la commande './bin/main'
+Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `./bin/main`
 Le projet n'ayant pas eu le temps d'être finaliser, la simulation ne fonctionnera pas entièrement
