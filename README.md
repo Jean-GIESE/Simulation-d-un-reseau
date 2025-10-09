@@ -29,3 +29,16 @@ Si vous n'avez pas le language C sur votre ordinateur, installez-le
 
 Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `./bin/main`
 Le projet n'ayant pas eu le temps d'être finaliser, la simulation ne fonctionnera pas entièrement
+
+## Description
+A compléter
+
+### Captures d'écran
+
+#### Création des Switchs / Stations / Liens :
+<img src="screenshots/CreationSwitchs.png" width="700" alt="Switch Screen">
+<img src="screenshots/CreationStation.png" width="700" alt="Station Screen">
+<img src="screenshots/CreationLien.png" width="700" alt="Lien Screen">
+
+#### Envoies de trames :
+<img src="screenshots/EnvoieTrames.png" width="700" alt="Trame Screen">
