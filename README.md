@@ -16,7 +16,7 @@ $ sudo apt install git
 2. Configurer vos informations d'utilisateur :
 ```sh
 $ git config --global user.name "[Prenom] [Nom]"
-$ git config --global user.email "[login]@unistra.fr"
+$ git config --global user.email "[email]"
 ```
 
 3. Cloner ce dépôt sur votre ordinateur personnel :
