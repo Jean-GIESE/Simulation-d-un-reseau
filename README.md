@@ -34,13 +34,13 @@ Le projet n'ayant pas eu le temps d'être finaliser, la simulation ne fonctionne
 Le but est de simuler un réseau avec ces envoies de trames, la réception des trames, les appareils informatiques interconnectés qui peuvent échanger des données et partager des ressources entre eux, etc.
 Pour ce faire la simulation va d’abord créer le réseau en initialisant les switchs, les stations et les liens.
 
-Pour les switchs il y aura :
+**Pour les switchs il y aura :**
 - une adresse MAC (qui permet d’identifier la destination où transmettre les infos),
 - le nombre de ports associés à chaque switchs ainsi que leur état (une interface présente sur un commutateur réseau qui permet aux appareils de se connecter au réseau).
 - sa capacité (quantité maximale de données qui peut être transmise entre le processeur d'interface du commutateur (ou la carte d'interface) et le bus de données).
 - ainsi qu’une table de commutation (permet notamment de créer différents circuits au sein d'un même réseau, de recevoir des informations et d'envoyer des données vers un destinataire précis en les transportant via le port adéquat).
 
-Pour les stations, il y aura :
+**Pour les stations, il y aura :**
 - une adresse MAC (qui permet d’identifier le réseau dans lequel la station),
 - une adresse IP (qui permet d’identifier la station).
 
