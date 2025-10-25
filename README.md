@@ -27,8 +27,10 @@ Si vous n'avez pas le language C sur votre ordinateur, installez-le
 
 ### Lancement de la simulation
 
-Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `./bin/main`
-Le projet n'ayant pas eu le temps d'être finaliser, la simulation ne fonctionnera pas entièrement
+Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `make`, cela va vous créer un fichier dans le répertoire **bin** nommé `/bin/main`.
+
+Pour exécuter le programme, tapez la commande `./bin/main`
+Dans le fichier `main.c` nous utilisons le fichier **mylan_nocycle** à la ligne 9 "creer_reseau("mylan_nocycle", &reseau);". Etant donné qu'il n'y a pas de cycle, la simulation fonctionnera. Cependant, si vous utiliser le fichier **mylan** à la place, la simulation va faire une boucle infini car la fonction faisant le protocle STP n'a pas eu le temps d'être finalisée.
 
 ## Description
 Le but est de simuler un réseau avec ces envoies de trames, la réception des trames, les appareils informatiques interconnectés qui peuvent échanger des données et partager des ressources entre eux, etc.
