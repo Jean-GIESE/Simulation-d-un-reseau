@@ -21,7 +21,7 @@ $ git config --global user.email "[email]"
 
 3. Cloner ce dépôt sur votre ordinateur personnel :
 ```sh
-$ git clone https://github.com/Jean-GIESE/Simulation-d-un-reseau.git
+git clone https://github.com/Jean-GIESE/Simulation-d-un-reseau.git
 ```
 Si vous n'avez pas le language C sur votre ordinateur, installez-le
 
