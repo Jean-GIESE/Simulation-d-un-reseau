@@ -6,7 +6,7 @@ int main()
 { 
   
   Reseau reseau;
-  creer_reseau("/home/legerh/Base/kk//mylan", &reseau);
+  creer_reseau("mylan_nocycle", &reseau);
 
   afficher_reseau(&reseau);
   stp(&reseau);
