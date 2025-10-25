@@ -27,7 +27,7 @@ Si vous n'avez pas le language C sur votre ordinateur, installez-le
 
 ### Lancement de la simulation
 
-Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `make`, cela va vous créer un fichier dans le répertoire **bin** nommé `/bin/main`.
+Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `make`, cela va vous créer un fichier dans le répertoire **bin** nommé `/bin/main`. Pour des raisons que j'ignore, le Makefile ne marche pas àprès le git clone, probablement que des fichiers ont été supprimés à cause du .gitignore?
 
 Pour exécuter le programme, tapez la commande `./bin/main`.
 
