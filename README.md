@@ -29,7 +29,8 @@ Si vous n'avez pas le language C sur votre ordinateur, installez-le
 
 Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `make`, cela va vous créer un fichier dans le répertoire **bin** nommé `/bin/main`.
 
-Pour exécuter le programme, tapez la commande `./bin/main`
+Pour exécuter le programme, tapez la commande `./bin/main`.
+
 Dans le fichier `main.c` nous utilisons le fichier **mylan_nocycle** à la ligne 9 "creer_reseau("mylan_nocycle", &reseau);". Etant donné qu'il n'y a pas de cycle, la simulation fonctionnera. Cependant, si vous utiliser le fichier **mylan** à la place, la simulation va faire une boucle infini car la fonction faisant le protocle STP n'a pas eu le temps d'être finalisée.
 
 ## Description
