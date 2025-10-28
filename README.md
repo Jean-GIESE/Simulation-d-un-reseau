@@ -10,13 +10,13 @@ Ouvrez un terminal et mettez-vous dans un répertoire où vous placerez le proje
 
 1. Installer git sur votre ordinateur personnel (rien à faire si vous avez déjà Git) :
 ```sh
-$ sudo apt install git
+sudo apt install git
 ```
 
 2. Configurer vos informations d'utilisateur :
 ```sh
-$ git config --global user.name "[Prenom] [Nom]"
-$ git config --global user.email "[email]"
+git config --global user.name "[Prenom] [Nom]"
+git config --global user.email "[email]"
 ```
 
 3. Cloner ce dépôt sur votre ordinateur personnel :
