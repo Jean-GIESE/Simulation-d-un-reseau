@@ -27,11 +27,13 @@ Si vous n'avez pas le language C sur votre ordinateur, installez-le
 
 ### Lancement de la simulation
 
-Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `make`, cela va vous créer un fichier dans le répertoire **bin** nommé `/bin/main`. Pour des raisons que j'ignore, le Makefile ne marche pas àprès le git clone, probablement que des fichiers ont été supprimés à cause du .gitignore?
-
-Pour exécuter le programme, tapez la commande `./bin/main`.
+Allez dans le répertoire `Simulation-d-un-reseau` et tapez la commande `chmod +x bin/main`, puis la commande `./bin/main`.
 
 Dans le fichier `main.c` nous utilisons le fichier **mylan_nocycle** à la ligne 9 "creer_reseau("mylan_nocycle", &reseau);". Etant donné qu'il n'y a pas de cycle, la simulation fonctionnera. Cependant, si vous utiliser le fichier **mylan** à la place, la simulation va faire une boucle infini car la fonction faisant le protocle STP n'a pas eu le temps d'être finalisée.
+
+Si vous souhaitez tout de même tester avec un réseau qui fait un cycle, changer "creer_reseau("mylan_nocycle", &reseau);" par "creer_reseau("mylan", &reseau);" dans le fichier main.c . Puis tapez la commande `make` sur votre terminal dans le répertoire `Simulation-d-un-reseau`, cela va vous créer un fichier dans le répertoire **bin** nommé `/bin/main`. Pour des raisons que j'ignore, le Makefile ne marche pas à cause du git clone, probablement que des fichiers ont été supprimés à cause du .gitignore?
+
+Pour exécuter le programme, tapez la commande `./bin/main`.
 
 ## Description
 Le but est de simuler un réseau avec ces envoies de trames, la réception des trames, les appareils informatiques interconnectés qui peuvent échanger des données et partager des ressources entre eux, etc.
