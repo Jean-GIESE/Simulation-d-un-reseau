@@ -7,7 +7,7 @@
 
 # --- Fichiers de build ---
 /build/
-/bin/
+# /bin/
 /obj/
 /dist/
 /Debug/
