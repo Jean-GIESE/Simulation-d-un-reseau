@@ -1,9 +1,9 @@
 # --- Fichiers binaires ---
-# *.o
-# *.out
+*.o
+*.out
 # *.exe
-# *.a
-# *.so
+*.a
+*.so
 
 # --- Fichiers de build ---
 /build/
